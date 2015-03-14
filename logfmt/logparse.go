@@ -50,7 +50,7 @@ var timeFormats = []string{
 var ErrUnterminatedString = errors.New("logfmt: unterminated string")
 
 // Scan returns a log line, parsed as logfmt.
-func Scan(data []byte) (line *Line, err error) {
+func Scan(line *Line) (err error) {
 	var c byte
 	var i int
 	var m int
@@ -59,7 +59,7 @@ func Scan(data []byte) (line *Line, err error) {
 	var ok bool
 	var esc bool
 
-	line = &Line{data, make(map[string]interface{})}
+	data = line.line
 
 garbage:
 	if i == len(data) {
@@ -82,7 +82,7 @@ key:
 	if i >= len(data) {
 		if m >= 0 {
 			key = data[m:i]
-			line.keys[string(key)] = nil
+			line.Append(string(key), nil)
 		}
 		return
 	}
@@ -99,7 +99,7 @@ key:
 	default:
 		key = data[m:i]
 		i++
-		line.keys[string(key)] = nil
+		line.Append(string(key), nil)
 		goto garbage
 	}
 
@@ -108,7 +108,7 @@ equal:
 		if m >= 0 {
 			i--
 			key = data[m:i]
-			line.keys[string(key)] = nil
+			line.Append(string(key), nil)
 		}
 		return
 	}
@@ -126,7 +126,7 @@ equal:
 		goto qvalue
 	default:
 		if key != nil {
-			line.keys[string(key)] = parseValue(val)
+			line.Append(string(key), parseValue(val))
 		}
 		i++
 		goto garbage
@@ -136,7 +136,7 @@ ivalue:
 	if i >= len(data) {
 		if m >= 0 {
 			val = data[m:i]
-			line.keys[string(key)] = parseValue(val)
+			line.Append(string(key), parseValue(val))
 		}
 		return
 	}
@@ -148,7 +148,7 @@ ivalue:
 		goto ivalue
 	default:
 		val = data[m:i]
-		line.keys[string(key)] = parseValue(val)
+		line.Append(string(key), parseValue(val))
 		i++
 		goto garbage
 	}
@@ -179,7 +179,7 @@ qvalue:
 		} else {
 			val = val[1 : len(val)-1]
 		}
-		line.keys[string(key)] = parseValue(val)
+		line.Append(string(key), parseValue(val))
 		goto garbage
 	default:
 		i++
@@ -193,8 +193,8 @@ func parseValue(val []byte) interface{} {
 		return fix
 	} else if flo, err := strconv.ParseFloat(s, 64); err == nil {
 		return flo
-	} else if tim, err := tryTimes(s); err == nil {
-		return tim
+		//} else if tim, err := tryTimes(s); err == nil {
+		//	return tim
 	}
 	return s
 }
