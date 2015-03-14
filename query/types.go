@@ -20,148 +20,106 @@ const (
 	Lt
 )
 
-type Query interface {
-	Match(*logfmt.Line) bool
+type Matcher func(*logfmt.Line) bool
+
+func NewNegMatcher(q Matcher) Matcher {
+	return func(line *logfmt.Line) bool {
+		return !q(line)
+	}
 }
 
-type negQuery struct {
-	q1 Query
+func NewAndMatcher(q1 Matcher, q2 Matcher) Matcher {
+	return func(line *logfmt.Line) bool {
+		return q1(line) && q2(line)
+	}
 }
 
-type andQuery struct {
-	q1 Query
-	q2 Query
+func NewOrMatcher(q1 Matcher, q2 Matcher) Matcher {
+	return func(line *logfmt.Line) bool {
+		return q1(line) && q2(line)
+	}
 }
 
-type orQuery struct {
-	q1 Query
-	q2 Query
-}
+func NewKeyMatcher(op operator, key string, mval interface{}) Matcher {
+	return func(line *logfmt.Line) bool {
+		val, ok := line.Get(key)
+		if !ok {
+			return false
+		}
 
-type keyQuery struct {
-	op  operator
-	key string
-	val interface{} // baseline to compare to.
-}
+		switch op {
+		case Eq, Ne:
+			eq := false
+			switch mval.(type) {
+			case *regexp.Regexp:
+				re := mval.(*regexp.Regexp)
+				switch val.(type) {
+				case int, int64:
+					v := fmt.Sprintf("%d", val.(float64))
+					eq = re.MatchString(v)
+				case float64:
+					v := fmt.Sprintf("%f", val.(float64))
+					eq = re.MatchString(v)
+				case string:
+					eq = re.MatchString(val.(string))
+				}
+			default:
+				eq = reflect.DeepEqual(val, mval)
+			}
 
-type regexpQuery struct {
-	re *regexp.Regexp
-}
+			if eq && op == Ne {
+				return false
+			} else if !eq && op == Ne {
+				return true
+			}
 
-type inQuery struct {
-	b []byte
-}
+			return eq
+		case Le, Lt, Ge, Gt:
+			var l float64
+			var r float64
 
-func NewNegQuery(q Query) Query {
-	return &negQuery{q}
-}
+			switch mval.(type) {
+			case float64:
+				r = mval.(float64)
+			case int, int64:
+				r = float64(mval.(int64))
+			default:
+				return false
+			}
 
-func (q *negQuery) Match(line *logfmt.Line) bool {
-	return !q.q1.Match(line)
-}
+			switch val.(type) {
+			case float64:
+				l = val.(float64)
+			case int, int64:
+				l = float64(val.(int64))
+			default:
+				return false
+			}
 
-func NewAndQuery(q1 Query, q2 Query) Query {
-	return &andQuery{q1, q2}
-}
+			switch op {
+			case Le:
+				return l <= r
+			case Lt:
+				return l < r
+			case Ge:
+				return l >= r
+			case Gt:
+				return l > r
+			}
+		}
 
-func (q *andQuery) Match(line *logfmt.Line) bool {
-	return q.q1.Match(line) && q.q2.Match(line)
-}
-
-func NewOrQuery(q1 Query, q2 Query) Query {
-	return &orQuery{q1, q2}
-}
-
-func (q *orQuery) Match(line *logfmt.Line) bool {
-	return q.q1.Match(line) || q.q2.Match(line)
-}
-
-func NewKeyQuery(op operator, key string, val interface{}) Query {
-	return &keyQuery{op, key, val}
-}
-
-func (q *keyQuery) Match(line *logfmt.Line) bool {
-	val, ok := line.Get(q.key)
-	if !ok {
 		return false
 	}
+}
 
-	switch q.op {
-	case Eq, Ne:
-		eq := false
-		switch q.val.(type) {
-		case *regexp.Regexp:
-			re := q.val.(*regexp.Regexp)
-			switch val.(type) {
-			case int, int64:
-				v := fmt.Sprintf("%d", val.(float64))
-				eq = re.MatchString(v)
-			case float64:
-				v := fmt.Sprintf("%f", val.(float64))
-				eq = re.MatchString(v)
-			case string:
-				eq = re.MatchString(val.(string))
-			}
-		default:
-			eq = reflect.DeepEqual(val, q.val)
-		}
-
-		if eq && q.op == Ne {
-			return false
-		} else if !eq && q.op == Ne {
-			return true
-		}
-
-		return eq
-	case Le, Lt, Ge, Gt:
-		var l float64
-		var r float64
-
-		switch q.val.(type) {
-		case float64:
-			r = q.val.(float64)
-		case int, int64:
-			r = float64(q.val.(int64))
-		default:
-			return false
-		}
-
-		switch val.(type) {
-		case float64:
-			l = val.(float64)
-		case int, int64:
-			l = float64(val.(int64))
-		default:
-			return false
-		}
-
-		switch q.op {
-		case Le:
-			return l <= r
-		case Lt:
-			return l < r
-		case Ge:
-			return l >= r
-		case Gt:
-			return l > r
-		}
+func NewRegexpMatcher(re *regexp.Regexp) Matcher {
+	return func(line *logfmt.Line) bool {
+		return re.Match(line.Bytes())
 	}
-
-	return false
 }
 
-func NewRegexpQuery(re *regexp.Regexp) Query {
-	return &regexpQuery{re}
-}
-
-func (q *regexpQuery) Match(line *logfmt.Line) bool {
-	return q.re.Match(line.Bytes())
-}
-
-func NewInQuery(s string) Query {
-	return &inQuery{[]byte(s)}
-}
-
-func (q *inQuery) Match(line *logfmt.Line) bool {
-	return bytes.Contains(line.Bytes(), q.b)
+func NewInMatcher(s string) Matcher {
+	return func(line *logfmt.Line) bool {
+		return bytes.Contains(line.Bytes(), []byte(s))
+	}
 }

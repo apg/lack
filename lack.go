@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	var q query.Query
+	var q query.Matcher
 
 	if len(os.Args) > 1 {
 		q, _ = query.Parse([]byte(os.Args[1]))
@@ -25,7 +25,7 @@ func main() {
 		}
 
 		line, err := logfmt.Scan(l)
-		if q != nil && q.Match(line) {
+		if q != nil && q(line) {
 			fmt.Fprintf(os.Stdout, "%s", line.Bytes())
 		}
 	}

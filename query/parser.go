@@ -8,9 +8,9 @@ import "errors"
 const eof = 0
 
 // Parse returns a parsed query
-func Parse(q []byte) (Query, error) {
+func Parse(q []byte) (Matcher, error) {
 	if queryParse(&queryLex{line: q}) == 0 {
-		return lastQuery, nil
+		return lastMatcher, nil
 	}
 	return nil, errors.New("Parse error!")
 }

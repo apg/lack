@@ -8,12 +8,12 @@ import (
 	"regexp"
 )
 
-var lastQuery Query
+var lastMatcher Matcher
 
 //line query.y:12
 type querySymType struct {
 	yys int
-	qry Query
+	mat Matcher
 	fix int64
 	flo float64
 	str string
@@ -379,141 +379,141 @@ querydefault:
 		//line query.y:34
 		{
 			// $$ = $1
-			lastQuery = queryS[querypt-0].qry
+			lastMatcher = queryS[querypt-0].mat
 		}
 	case 2:
-		queryVAL.qry = queryS[querypt-0].qry
+		queryVAL.mat = queryS[querypt-0].mat
 	case 3:
 		//line query.y:42
 		{
-			queryVAL.qry = NewNegQuery(queryS[querypt-0].qry)
+			queryVAL.mat = NewNegMatcher(queryS[querypt-0].mat)
 		}
 	case 4:
-		queryVAL.qry = queryS[querypt-0].qry
+		queryVAL.mat = queryS[querypt-0].mat
 	case 5:
 		//line query.y:49
 		{
-			queryVAL.qry = NewAndQuery(queryS[querypt-2].qry, queryS[querypt-0].qry)
+			queryVAL.mat = NewAndMatcher(queryS[querypt-2].mat, queryS[querypt-0].mat)
 		}
 	case 6:
 		//line query.y:53
 		{
-			queryVAL.qry = NewOrQuery(queryS[querypt-2].qry, queryS[querypt-0].qry)
+			queryVAL.mat = NewOrMatcher(queryS[querypt-2].mat, queryS[querypt-0].mat)
 		}
 	case 7:
 		//line query.y:58
 		{
-			queryVAL.qry = NewRegexpQuery(queryS[querypt-0].rxp)
+			queryVAL.mat = NewRegexpMatcher(queryS[querypt-0].rxp)
 		}
 	case 8:
 		//line query.y:61
 		{
-			queryVAL.qry = NewInQuery(queryS[querypt-0].str)
+			queryVAL.mat = NewInMatcher(queryS[querypt-0].str)
 		}
 	case 9:
 		//line query.y:64
 		{
-			queryVAL.qry = NewInQuery(queryS[querypt-0].str)
+			queryVAL.mat = NewInMatcher(queryS[querypt-0].str)
 		}
 	case 10:
 		//line query.y:67
 		{
-			queryVAL.qry = queryS[querypt-0].qry
+			queryVAL.mat = queryS[querypt-0].mat
 		}
 	case 11:
 		//line query.y:71
 		{
-			queryVAL.qry = queryS[querypt-1].qry
+			queryVAL.mat = queryS[querypt-1].mat
 		}
 	case 12:
 		//line query.y:76
 		{
-			queryVAL.qry = NewKeyQuery(Eq, queryS[querypt-2].str, queryS[querypt-0].str)
+			queryVAL.mat = NewKeyMatcher(Eq, queryS[querypt-2].str, queryS[querypt-0].str)
 		}
 	case 13:
 		//line query.y:79
 		{
-			queryVAL.qry = NewKeyQuery(Eq, queryS[querypt-2].str, queryS[querypt-0].str)
+			queryVAL.mat = NewKeyMatcher(Eq, queryS[querypt-2].str, queryS[querypt-0].str)
 		}
 	case 14:
 		//line query.y:82
 		{
-			queryVAL.qry = NewKeyQuery(Eq, queryS[querypt-2].str, queryS[querypt-0].rxp)
+			queryVAL.mat = NewKeyMatcher(Eq, queryS[querypt-2].str, queryS[querypt-0].rxp)
 		}
 	case 15:
 		//line query.y:85
 		{
-			queryVAL.qry = NewKeyQuery(Eq, queryS[querypt-2].str, queryS[querypt-0].fix)
+			queryVAL.mat = NewKeyMatcher(Eq, queryS[querypt-2].str, queryS[querypt-0].fix)
 		}
 	case 16:
 		//line query.y:88
 		{
-			queryVAL.qry = NewKeyQuery(Eq, queryS[querypt-2].str, queryS[querypt-0].flo)
+			queryVAL.mat = NewKeyMatcher(Eq, queryS[querypt-2].str, queryS[querypt-0].flo)
 		}
 	case 17:
 		//line query.y:91
 		{
-			queryVAL.qry = NewKeyQuery(Ne, queryS[querypt-2].str, queryS[querypt-0].str)
+			queryVAL.mat = NewKeyMatcher(Ne, queryS[querypt-2].str, queryS[querypt-0].str)
 		}
 	case 18:
 		//line query.y:94
 		{
-			queryVAL.qry = NewKeyQuery(Ne, queryS[querypt-2].str, queryS[querypt-0].str)
+			queryVAL.mat = NewKeyMatcher(Ne, queryS[querypt-2].str, queryS[querypt-0].str)
 		}
 	case 19:
 		//line query.y:97
 		{
-			queryVAL.qry = NewKeyQuery(Ne, queryS[querypt-2].str, queryS[querypt-0].rxp)
+			queryVAL.mat = NewKeyMatcher(Ne, queryS[querypt-2].str, queryS[querypt-0].rxp)
 		}
 	case 20:
 		//line query.y:100
 		{
-			queryVAL.qry = NewKeyQuery(Ne, queryS[querypt-2].str, queryS[querypt-0].fix)
+			queryVAL.mat = NewKeyMatcher(Ne, queryS[querypt-2].str, queryS[querypt-0].fix)
 		}
 	case 21:
 		//line query.y:103
 		{
-			queryVAL.qry = NewKeyQuery(Ne, queryS[querypt-2].str, queryS[querypt-0].flo)
+			queryVAL.mat = NewKeyMatcher(Ne, queryS[querypt-2].str, queryS[querypt-0].flo)
 		}
 	case 22:
 		//line query.y:106
 		{
-			queryVAL.qry = NewKeyQuery(Gt, queryS[querypt-2].str, queryS[querypt-0].fix)
+			queryVAL.mat = NewKeyMatcher(Gt, queryS[querypt-2].str, queryS[querypt-0].fix)
 		}
 	case 23:
 		//line query.y:109
 		{
-			queryVAL.qry = NewKeyQuery(Gt, queryS[querypt-2].str, queryS[querypt-0].flo)
+			queryVAL.mat = NewKeyMatcher(Gt, queryS[querypt-2].str, queryS[querypt-0].flo)
 		}
 	case 24:
 		//line query.y:112
 		{
-			queryVAL.qry = NewKeyQuery(Lt, queryS[querypt-2].str, queryS[querypt-0].fix)
+			queryVAL.mat = NewKeyMatcher(Lt, queryS[querypt-2].str, queryS[querypt-0].fix)
 		}
 	case 25:
 		//line query.y:115
 		{
-			queryVAL.qry = NewKeyQuery(Lt, queryS[querypt-2].str, queryS[querypt-0].flo)
+			queryVAL.mat = NewKeyMatcher(Lt, queryS[querypt-2].str, queryS[querypt-0].flo)
 		}
 	case 26:
 		//line query.y:118
 		{
-			queryVAL.qry = NewKeyQuery(Ge, queryS[querypt-2].str, queryS[querypt-0].fix)
+			queryVAL.mat = NewKeyMatcher(Ge, queryS[querypt-2].str, queryS[querypt-0].fix)
 		}
 	case 27:
 		//line query.y:121
 		{
-			queryVAL.qry = NewKeyQuery(Ge, queryS[querypt-2].str, queryS[querypt-0].flo)
+			queryVAL.mat = NewKeyMatcher(Ge, queryS[querypt-2].str, queryS[querypt-0].flo)
 		}
 	case 28:
 		//line query.y:124
 		{
-			queryVAL.qry = NewKeyQuery(Le, queryS[querypt-2].str, queryS[querypt-0].fix)
+			queryVAL.mat = NewKeyMatcher(Le, queryS[querypt-2].str, queryS[querypt-0].fix)
 		}
 	case 29:
 		//line query.y:127
 		{
-			queryVAL.qry = NewKeyQuery(Le, queryS[querypt-2].str, queryS[querypt-0].flo)
+			queryVAL.mat = NewKeyMatcher(Le, queryS[querypt-2].str, queryS[querypt-0].flo)
 		}
 	case 30:
 		//line query.y:133
