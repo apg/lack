@@ -3,8 +3,8 @@ package query
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"regexp"
+	"strconv"
 
 	"github.com/apg/lack/logfmt"
 )
@@ -89,6 +89,9 @@ func (q *keyQuery) Match(line *logfmt.Line) bool {
 	switch q.op {
 	case Eq, Ne:
 		eq := false
+
+		// Lazily parse here.
+
 		switch q.val.(type) {
 		case *regexp.Regexp:
 			re := q.val.(*regexp.Regexp)
@@ -101,9 +104,31 @@ func (q *keyQuery) Match(line *logfmt.Line) bool {
 				eq = re.MatchString(v)
 			case string:
 				eq = re.MatchString(val.(string))
+			case []byte:
+				eq = re.Match(val.([]byte))
 			}
-		default:
-			eq = reflect.DeepEqual(val, q.val)
+		case string:
+			eq = val.(string) == q.val.(string)
+		case []byte:
+			eq = string(val.([]byte)) == string(q.val.([]byte))
+		case int64, int:
+			switch val.(type) {
+			case int64, int:
+				eq = val.(int64) == q.val.(int64)
+			case []byte:
+				if fix, err := strconv.ParseInt(string(val.([]byte)), 10, 64); err == nil {
+					eq = fix == q.val.(int64)
+				}
+			}
+		case float64:
+			switch val.(type) {
+			case float64:
+				eq = val.(float64) == q.val.(float64)
+			case []byte:
+				if flo, err := strconv.ParseFloat(string(val.([]byte)), 64); err == nil {
+					eq = flo == q.val.(float64)
+				}
+			}
 		}
 
 		if eq && q.op == Ne {
@@ -111,8 +136,8 @@ func (q *keyQuery) Match(line *logfmt.Line) bool {
 		} else if !eq && q.op == Ne {
 			return true
 		}
-
 		return eq
+
 	case Le, Lt, Ge, Gt:
 		var l float64
 		var r float64
@@ -131,6 +156,18 @@ func (q *keyQuery) Match(line *logfmt.Line) bool {
 			l = val.(float64)
 		case int, int64:
 			l = float64(val.(int64))
+		case []byte:
+			if flo, err := strconv.ParseFloat(string(val.([]byte)), 64); err != nil {
+				return false
+			} else {
+				l = flo
+			}
+		case string:
+			if flo, err := strconv.ParseFloat(val.(string), 64); err != nil {
+				return false
+			} else {
+				l = flo
+			}
 		default:
 			return false
 		}

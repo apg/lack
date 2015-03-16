@@ -59,7 +59,7 @@ func Scan(line *Line) (err error) {
 	var ok bool
 	var esc bool
 
-	data = line.line
+	data := line.line
 
 garbage:
 	if i == len(data) {
@@ -126,7 +126,7 @@ equal:
 		goto qvalue
 	default:
 		if key != nil {
-			line.Append(string(key), parseValue(val))
+			line.Append(string(key), val)
 		}
 		i++
 		goto garbage
@@ -136,7 +136,7 @@ ivalue:
 	if i >= len(data) {
 		if m >= 0 {
 			val = data[m:i]
-			line.Append(string(key), parseValue(val))
+			line.Append(string(key), val)
 		}
 		return
 	}
@@ -148,7 +148,7 @@ ivalue:
 		goto ivalue
 	default:
 		val = data[m:i]
-		line.Append(string(key), parseValue(val))
+		line.Append(string(key), val)
 		i++
 		goto garbage
 	}
@@ -179,7 +179,7 @@ qvalue:
 		} else {
 			val = val[1 : len(val)-1]
 		}
-		line.Append(string(key), parseValue(val))
+		line.Append(string(key), val)
 		goto garbage
 	default:
 		i++
