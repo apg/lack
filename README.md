@@ -2,8 +2,7 @@
 
 ## Note:
 
-This is super hacky right now, but "works." I will be adding a way to
-do formatted output next.
+This is super hacky right now, but "works." 
 
 ## Build
 
@@ -14,7 +13,37 @@ $ go generate ./... && go build ./... && go build
 ## Run
 
 ```
-$ lack <query> < INPUT
+$ lack -format "<fmt string>" <query> < INPUT
+```
+
+## Format strings
+
+### Positional (always ' ' delimited for now)
+
+```
+$ echo "foo bar" | ./lack -format '%1 %2 %0' 'foo'
+bar foo foo bar
+```
+
+### Keys
+
+```
+$ echo "foo=bar" | ./lack -format '%{foo}' 'foo'
+bar
+```
+
+### Mixed
+
+```
+$ echo "foo=bar baz" | ./lack -format '%{foo} %2' 'foo'
+bar baz
+```
+
+### Inserted tabs (Note: inserted are ASCII 9, e.g. '\t', not spaces)
+
+```
+$ echo "foo=bar baz" | ./lack -format '%{foo}\t%2' 'foo'
+bar     baz
 ```
 
 ## Current supported query types:
