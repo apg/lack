@@ -23,7 +23,7 @@ var lastQuery Query
 %token '=' '>' '<' '(' ')' '!' '&' '|' '-'
 %token LE GE NE
 %token <fix> FIX
-nn%token <flo> FLO
+%token <flo> FLO
 %token <str> WORD
 %token <str> STR
 %token <rxp> RXP
